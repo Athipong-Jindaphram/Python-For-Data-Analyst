@@ -1,14 +1,12 @@
-# Data Career Skills Analysis
+# The Analysis
 
-## Project Overview
+## 1. What are the most demanded skills for the top 3 most popular data roles?
 
-This section investigates the technical requirements for the three most prominent professions in the data industry. By isolating high-demand roles and extracting their top five essential skills, this analysis provides a strategic roadmap for skill acquisition based on specific career objectives. It serves as a guide for prioritizing the most relevant tools in a competitive job market.
+To find the most demanded skills for the top 3 most popular data roles. I filtered out those positions by which one were the most popular, and hot the top 5 skills for these top 3 roles. This query highlights the most popular job titles and their top skills, showing which skills I should pay attention to depending on the role I'm targeting.
 
-View my notebook with detailed steps here: [2_Skills_Count.ipynb](Project_for_da/2_Skills_Count.ipynb)
+View my notebook with detailed steps here: [2_Skills_Count.ipynb](2_Skills_Count.ipynb)
 
-## Visualizing the Demand
-
-The following Python code utilizes Matplotlib and Seaborn to generate a comparative analysis of skill frequency across different data roles:
+### Visualize Data
 
 ```python
 fig, ax = plt.subplots(len(job_titles), 1)
@@ -40,9 +38,83 @@ plt.show()
 
 ### Insights
 
+- Python is a versatile skill, highly demanded across all three roles, but most prominently for Data Scientists (72%) and Data Engineers (65%).
+- SQL is the most requested skill for Data Analyst and Data Scientists, with it in over half of the job postings for both roles. For Data Engineers, Python is the most sought-after skill, appearing in 68% of job postings.
+- Data Engineers require more specialized technical skills (AWS, Azure, Spark) compared to Data Analysts and Data Scientists who are expected to be proficient in more general data management and analysis tools (Excel, Tableau)
 
-- The Ubiquity of Python: Python stands as the most versatile asset, showing significant demand across all three roles, with a peak presence in Data Science (72%) and Data Engineering (65%).
+# The Analysis
 
-- SQL vs. Python Priority: While SQL is the primary requirement for Data Analysts and Data Scientists (appearing in over 50% of postings), the Data Engineering path prioritizes Python, which is requested in 68% of job listings.
+## 2. How are in-demand skills trending for Data Analysts?
 
-- Specialization Trends: There is a distinct technological divide; Data Engineering demands specialized infrastructure skills such as AWS, Azure, and Spark. In contrast, Analysts and Scientists are expected to master broader data management and visualization tools like Excel and Tableau.
+### Visualize Data
+
+```python
+
+df_da_us = df[
+    (df["job_title"] == "Data Analyst")
+    &
+    (df["job_country"] == "United States")
+    ].copy()
+
+df_da_us["job_month_no"] = df_da_us["job_posted_date"].dt.month
+df_da_us["month_name"] = df_da_us["job_posted_date"].dt.month_name()
+
+df_da_us_explode = df_da_us.explode("job_skills")
+
+df_da_us_pivot = df_da_us_explode.pivot_table(
+    index=["job_month_no", "month_name"],
+    values="job_title",
+    columns="job_skills",
+    aggfunc="size",
+    fill_value=0
+)
+df_da_us_pivot = df_da_us_pivot.reset_index()
+df_da_us_pivot = df_da_us_pivot.set_index("month_name")
+df_da_us_pivot.loc["total"] = df_da_us_pivot.sum()
+df_da_us_pivot = df_da_us_pivot[
+    df_da_us_pivot
+    .loc["total"]
+    .sort_values(ascending=False)
+    .index
+    ]
+
+df_da_us_pivot = df_da_us_pivot.drop("total")
+
+da_total = df_da_us.groupby("month_name").size()
+df_da_us_percent = df_da_us_pivot.div(da_total/100, axis=0).reindex(df_da_us_pivot.index)
+
+df_plot = df_da_us_percent.iloc[:, :5]
+
+sns.lineplot(data=df_plot, dashes=False, palette="tab10")
+sns.set_theme(style="ticks")
+sns.despine()
+
+plt.title("Trending Top Skills for Data Analyst in the US")
+plt.ylabel("likrlihood in Job Posting")
+plt.xlabel("2023")
+plt.xticks(rotation=45, ha="right")
+plt.legend().remove()
+
+from matplotlib.ticker import PercentFormatter
+ax = plt.gca()
+ax.yaxis.set_major_formatter(PercentFormatter(decimals=0))
+
+for i in range(5):
+    plt.text(11.2, df_plot.iloc[-1, i], df_plot.columns[i])
+
+plt.tight_layout()
+plt.show()
+
+```
+
+### Result
+
+![Trending Top Skills For Data Analysts in the US](images/trending_top_skills_for_da.png)
+
+*Bar graph visualizing the trending top skills for data analysts in the US in 2023*
+
+### Insights
+
+- SQL remains the most consistency demanded skill throughtout the year, although it shows a gradual decrease in demand.
+- Excel experienced a significant increase in demand starting around September, surpassing both Python and Tableau by the end of the year.
+- Both Python and Tableau show relatively stable demand throughout the year with some fluctuations but remain essential skills for data analysts. While Power BI is less demanded compared to the other top-tier skills, it remained remarkably stable throughout the year, consistently hovering around the 20% mark with a slight peak in demand during the mid-year months.
