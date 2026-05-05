@@ -34,7 +34,7 @@ plt.show()
 
 ### Result
 
-![Visualization of Top Skills](Project_for_da/images/skill_demand_all_data_role.png)
+![Visualization of Top Skills](images/skill_demand_all_data_role.png)
 
 ### Insights
 
