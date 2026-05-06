@@ -157,3 +157,49 @@ plt.show()
 ![Salary Distribution of Data Jobs in the US](images/salary_top6.png)
 
 *Box plot visualizing the salary distributions for the top 6 data job titles*
+
+### Highest Paid & Most Demanded Skills for Data Analysts
+
+#### Visualize Data
+
+```python
+
+df_da_us = df[
+    (df["job_title_short"] == "Data Analyst")
+    & 
+    (df["job_country"] == "United States")
+    ].copy()
+
+df_da_us = df_da_us.explode("job_skills")
+
+df_da_top_pay = df_da_us.groupby("job_skills")["salary_year_avg"].agg(["count", "median"]).sort_values(by="median", ascending=False)
+df_da_top_pay = df_da_top_pay.head(10)
+
+df_da_skills = df_da_us.groupby("job_skills")["salary_year_avg"].agg(["count", "median"]).sort_values(by="count", ascending=False)
+df_da_skills = df_da_skills.head(10).sort_values(by="median", ascending=False)
+
+fig, ax = plt.subplots(2,1)
+
+sns.set_theme(style="ticks")
+
+sns.barplot(data=df_da_top_pay, x="median", y=df_da_top_pay.index, hue="median", ax=ax[0], palette="dark:b")
+ax[0].legend().remove()
+ax[0].set_title("Top 10 Highest Paid Skills for Data Analysts")
+ax[0].set_ylabel("")
+ax[0].set_xlabel("")
+ax[0].xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${int(x/1000)}K"))
+
+sns.barplot(data=df_da_skills, x="median", y=df_da_skills.index, hue="median", ax=ax[1], palette="light:b")
+ax[1].legend().remove()
+
+ax[1].set_title("Top 10 Most In-Demand Skills for Data Analysts")
+ax[1].set_ylabel("")
+ax[1].set_xlabel("Median Salary ($USD)")
+ax[1].set_xlim(ax[0].get_xlim())
+ax[1].xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${int(x/1000)}K"))
+
+plt.tight_layout()
+
+```
+
+![Top 10 Most Highest Paid & In-Demand Skills for Data Analysts](images/top10_salary_demand_DA.png)
