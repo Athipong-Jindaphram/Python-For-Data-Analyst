@@ -118,3 +118,42 @@ plt.show()
 - SQL remains the most consistency demanded skill throughtout the year, although it shows a gradual decrease in demand.
 - Excel experienced a significant increase in demand starting around September, surpassing both Python and Tableau by the end of the year.
 - Both Python and Tableau show relatively stable demand throughout the year with some fluctuations but remain essential skills for data analysts. While Power BI is less demanded compared to the other top-tier skills, it remained remarkably stable throughout the year, consistently hovering around the 20% mark with a slight peak in demand during the mid-year months.
+
+# The Analyst
+
+## 3. How well do jobs and skills pay for Data Analysts?
+
+### Salary Analysis
+
+#### Visualize Data
+
+```python
+
+df_us = df[df["job_country"] == "United States"].dropna(subset="salary_year_avg")
+
+job_titles = df_us["job_title_short"].value_counts().index[:6].tolist()
+
+df_us_top6 = df_us[
+    df_us["job_title_short"]
+    .isin(job_titles)
+    ]
+
+job_order = df_us_top6.groupby("job_title_short")["salary_year_avg"].median().sort_values(ascending=False).index
+
+sns.boxplot(data=df_us_top6, x="salary_year_avg", y="job_title_short", order=job_order)
+sns.set_theme(style="ticks")
+
+plt.title("Salary Distribution in the United States")
+plt.xlabel("Yearly Salary ($USD)")
+plt.ylabel("")
+plt.xlim(0,600000)
+
+ticks_x = plt.FuncFormatter(lambda y, pos: f"${int(y/1000)}K")
+plt.gca().xaxis.set_major_formatter(ticks_x)
+plt.show()
+
+```
+
+![Salary Distribution of Data Jobs in the US](images/salary_top6.png)
+
+*Box plot visualizing the salary distributions for the top 6 data job titles*
