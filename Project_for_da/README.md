@@ -46,44 +46,10 @@ plt.show()
 
 ## 2. How are in-demand skills trending for Data Analysts?
 
+View my notebook with detailed steps here: [3_Skills_Trend.ipynb](3_Skills_Trend.ipynb)
 ### Visualize Data
 
 ```python
-
-df_da_us = df[
-    (df["job_title"] == "Data Analyst")
-    &
-    (df["job_country"] == "United States")
-    ].copy()
-
-df_da_us["job_month_no"] = df_da_us["job_posted_date"].dt.month
-df_da_us["month_name"] = df_da_us["job_posted_date"].dt.month_name()
-
-df_da_us_explode = df_da_us.explode("job_skills")
-
-df_da_us_pivot = df_da_us_explode.pivot_table(
-    index=["job_month_no", "month_name"],
-    values="job_title",
-    columns="job_skills",
-    aggfunc="size",
-    fill_value=0
-)
-df_da_us_pivot = df_da_us_pivot.reset_index()
-df_da_us_pivot = df_da_us_pivot.set_index("month_name")
-df_da_us_pivot.loc["total"] = df_da_us_pivot.sum()
-df_da_us_pivot = df_da_us_pivot[
-    df_da_us_pivot
-    .loc["total"]
-    .sort_values(ascending=False)
-    .index
-    ]
-
-df_da_us_pivot = df_da_us_pivot.drop("total")
-
-da_total = df_da_us.groupby("month_name").size()
-df_da_us_percent = df_da_us_pivot.div(da_total/100, axis=0).reindex(df_da_us_pivot.index)
-
-df_plot = df_da_us_percent.iloc[:, :5]
 
 sns.lineplot(data=df_plot, dashes=False, palette="tab10")
 sns.set_theme(style="ticks")
@@ -123,22 +89,12 @@ plt.show()
 
 ## 3. How well do jobs and skills pay for Data Analysts?
 
+View my notebook with detailed steps here: [4_Salary_Analysis.ipynb](4_Salary_Analysis.ipynb)
 ### Salary Analysis
 
 #### Visualize Data
 
 ```python
-
-df_us = df[df["job_country"] == "United States"].dropna(subset="salary_year_avg")
-
-job_titles = df_us["job_title_short"].value_counts().index[:6].tolist()
-
-df_us_top6 = df_us[
-    df_us["job_title_short"]
-    .isin(job_titles)
-    ]
-
-job_order = df_us_top6.groupby("job_title_short")["salary_year_avg"].median().sort_values(ascending=False).index
 
 sns.boxplot(data=df_us_top6, x="salary_year_avg", y="job_title_short", order=job_order)
 sns.set_theme(style="ticks")
@@ -153,30 +109,24 @@ plt.gca().xaxis.set_major_formatter(ticks_x)
 plt.show()
 
 ```
+### Result
 
 ![Salary Distribution of Data Jobs in the US](images/salary_top6.png)
 
 *Box plot visualizing the salary distributions for the top 6 data job titles*
 
+### Insight
+
+- Role Hierarchy: There is a clear salary hierarchy among data roles. Data Scientists and Data Engineers tend to command higher median salaries than Data Analysts, reflecting the increased technical complexity or specialized engineering requirements of those positions.
+
+- Seniority Premium: Senior roles, such as Senior Data Scientist and Senior Data Analyst, show significantly higher median salaries and wider interquartile ranges, indicating that experience is a primary driver for salary growth in the US market.
+
+- Wide Salary Ranges: Most roles exhibit a broad distribution of salaries (indicated by the whiskers and outliers), suggesting that factors beyond job title—such as company size, industry, and specific geographic location—heavily influence individual compensation.
 ### Highest Paid & Most Demanded Skills for Data Analysts
 
 #### Visualize Data
 
 ```python
-
-df_da_us = df[
-    (df["job_title_short"] == "Data Analyst")
-    & 
-    (df["job_country"] == "United States")
-    ].copy()
-
-df_da_us = df_da_us.explode("job_skills")
-
-df_da_top_pay = df_da_us.groupby("job_skills")["salary_year_avg"].agg(["count", "median"]).sort_values(by="median", ascending=False)
-df_da_top_pay = df_da_top_pay.head(10)
-
-df_da_skills = df_da_us.groupby("job_skills")["salary_year_avg"].agg(["count", "median"]).sort_values(by="count", ascending=False)
-df_da_skills = df_da_skills.head(10).sort_values(by="median", ascending=False)
 
 fig, ax = plt.subplots(2,1)
 
@@ -201,5 +151,67 @@ ax[1].xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f"${int(x/1000)}K
 plt.tight_layout()
 
 ```
+### Result
 
 ![Top 10 Most Highest Paid & In-Demand Skills for Data Analysts](images/top10_salary_demand_DA.png)
+
+### Insight
+
+- The "Niche" Premium: The Highest Paid Skills for Data Analysts are often niche or specialized tools (e.g., Cloud tools or Big Data technologies) that may not appear in every job posting but command a significant salary premium due to their scarcity.
+
+- Demand vs. Compensation: There is a notable gap between the most in-demand skills and the highest-paying ones. While SQL and Excel are the most frequently requested, their median salaries are generally lower than more specialized programming languages or advanced analytics platforms.
+
+- Strategic Learning: To maximize earning potential as a Data Analyst, it is beneficial to move beyond foundational tools (SQL/Excel) and acquire proficiency in high-paying technical skills like Python or specific Cloud-based data platforms which bridge the gap between high demand and high pay.
+
+# The Analysis
+
+## 4. What are the most optimal skills for Data Analysts?
+
+This section explores the intersection of skill frequency in job postings and their associated median yearly salaries. We define "High Demand" as skills appearing in more than 5% of all Data Analyst job postings in the United States.
+
+View my notebook with detailed steps here: [5_Optimal_Skills.ipynb](5_Optimal_Skills.ipynb)
+
+### Visualize Data
+
+```python
+df_plot = df_da_skill_high_demand.merge(df_technology, left_on="job_skills", right_on="skills")
+
+from matplotlib.ticker import PercentFormatter
+#df_plot.plot(kind="scatter", x="skill_percent", y="median_salary")
+sns.scatterplot(
+    data=df_plot,
+    x="skill_percent",
+    y="median_salary",
+    hue="technology"
+)
+text = []
+for i, txt in enumerate(df_da_skill_high_demand.index):
+    text.append(plt.text(df_da_skill_high_demand["skill_percent"].iloc[i], df_da_skill_high_demand["median_salary"].iloc[i], txt))
+
+adjust_text(text, arrowprops=dict(arrowstyle="->", color="gray"))
+
+plt.xlabel("Count of Job Posting")
+plt.ylabel("Median Yearly Salary")
+plt.title(f"Most Optimal Skills for Data Analysts in the US")
+
+ax = plt.gca()
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, pos: f"${int(y/1000)}K"))
+ax.xaxis.set_major_formatter(PercentFormatter(decimals=0))
+plt.tight_layout()
+plt.show()
+```
+### Result
+
+![Top 10 Most Highest Paid & In-Demand Skills for Data Analysts](images/optimal_skill.png)
+
+*Scatter plot visualizing the relationship between skill demand (percentage) and median salary for Data Analysts.*
+
+### Insights
+
+- The "Optimal" Zone: Skills like Python, Tableau, and R sit in a sweet spot with relatively high demand (15–30%) and high median salaries (around $100K). These are high-value targets for specialization.
+
+- Foundational Skills: SQL and Excel lead in total demand, appearing in approximately 40–50% of job postings. While they are essential for landing a role, their median salaries are slightly lower (around $85K–$95K) compared to more specialized programming or visualization tools.
+
+- Technical Clustering: Many "optimal" skills fall under programming and analyst tools (e.g., Python and SAS), highlighting the shift toward more technical, code-based data analysis in the current market.
+
+- Market Entry: For those entering the field, mastering SQL and Excel provides the highest likelihood of finding a job, while adding Python or Tableau significantly increases earning potential.
